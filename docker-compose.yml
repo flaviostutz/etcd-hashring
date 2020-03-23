@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+
+  etcd-hashring:
+    build: .
+    image: flaviostutz/etcd-hashring
+    ports:
+      - "3000:3000"
+    environment:
+      - LOG_LEVEL=debug
+
