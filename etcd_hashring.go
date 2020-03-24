@@ -10,7 +10,6 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/serialx/hashring"
 	"github.com/sirupsen/logrus"
-	// "github.com/serialx/hashring"
 )
 
 //ETCDHashring main struct for lib ETCD Hashring
@@ -48,8 +47,8 @@ func (e *ETCDHashring) AddWatcher(listener Watcher) {
 	e.listeners = append(e.listeners, listener)
 }
 
-//Connect to ETCD and start monitoring service node for changes
-func (e *ETCDHashring) Connect() {
+//Run connect to ETCD and start monitoring service node for changes
+func (e *ETCDHashring) Run() {
 	cli, err := clientv3.New(clientv3.Config{Endpoints: e.etcdEndpoints, DialTimeout: 10 * time.Second})
 	if err != nil {
 		logrus.Errorf("Could not initialize ETCD client. err=%s", err)
@@ -58,7 +57,7 @@ func (e *ETCDHashring) Connect() {
 	logrus.Debug("Etcd client initialized")
 
 	nodesChan := make(chan []Node, 0)
-	logrus.Debug("Starting to watch nodes at %s", e.etcdServicePath)
+	logrus.Debugf("Starting to watch nodes at %s", e.etcdServicePath)
 	go watchRegisteredNodes(cli, e.etcdServicePath, nodesChan)
 
 	for {
@@ -76,19 +75,20 @@ func (e *ETCDHashring) Connect() {
 
 /*
 GetNode get the target node according to the elementId.
-For example, if the monitores Nodes in ETCD is a list of servers that accepts requests,
-you can you can use GetNode("client-172.23.23.21") to identify to which server the client
+For example, if Nodes in ETCD is a list of servers that accepts requests,
+you can use GetNode("client-172.23.23.21") to identify to which server the client
 would send its requests so that all servers will have a distributed set of clients targeting
-requests to them, according to the idea of Consistent Hashing
+requests to them from origin, according to the idea of Consistent Hashing
 */
 func (e *ETCDHashring) GetNode(elementID string) (Node, error) {
-	ring := hashring.New(hashList(e.CurrentNodeList))
+	hashedNodeList := hashList(e.CurrentNodeList)
+	ring := hashring.New(hashedNodeList)
 	nodeName, ok := ring.GetNode(stringSHA512(elementID))
 	if !ok {
 		return Node{}, fmt.Errorf("Could not get the node for this element id")
 	}
 	for _, n := range e.CurrentNodeList {
-		if n.Name == nodeName {
+		if stringSHA512(n.Name) == nodeName {
 			return n, nil
 		}
 	}
