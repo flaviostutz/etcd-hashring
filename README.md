@@ -1,5 +1,7 @@
 # etcd-hashring
 
+[<img src="https://goreportcard.com/badge/github.com/flaviostutz/etcd-hashring"/>](https://goreportcard.com/report/github.com/flaviostutz/etcd-hashring)
+
 Golang Lib to monitor and distribute nodes registered in ETCD dir based on a key for sharding capabilities (employ consistent hashing)
 
 This list will connect to an ETCD server and start to watch a certain dir. When some node in this dir is updated, the internal node are updated.
